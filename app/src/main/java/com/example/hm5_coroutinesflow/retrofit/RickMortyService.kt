@@ -7,12 +7,11 @@ import retrofit2.create
 import java.util.concurrent.TimeUnit
 
 
-//! retrofit
+// retrofit
 object RickMortyService {
 
-    private val retrofit by lazy(LazyThreadSafetyMode.NONE) {
-        provideRetrofit()
-    }
+    private val retrofit by lazy(LazyThreadSafetyMode.NONE) { provideRetrofit() }
+
     val personApi by lazy(LazyThreadSafetyMode.NONE) {
         retrofit.create<RickMortyApi>()
     }
