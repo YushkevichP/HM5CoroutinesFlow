@@ -1,11 +1,8 @@
 package com.example.hm5_coroutinesflow.retrofit
 
 
-import com.example.hm5_coroutinesflow.model.CartoonPerson
-//import com.example.hm5_coroutinesflow.model.PersonsListApi
 import com.example.hm5_coroutinesflow.model.PersonDetails
-import com.example.hm5_coroutinesflow.model.PersonsListApi
-import retrofit2.Call
+import com.example.hm5_coroutinesflow.model.wrapperForListFromApi
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -15,15 +12,15 @@ import retrofit2.http.Query
 interface RickMortyApi {
 
     @GET("character")
-    fun getUsers(
+    suspend fun getUsers(
         @Query("page") page: Int,
 
-        ): Call<PersonsListApi>
+        ): wrapperForListFromApi
 
     @GET("character/{id}")
-    fun getUserDetails(
-        @Path("id") id: Int // Path -подставление значения в какой-то запрос.
+    suspend fun getUserDetails(
+        @Path("id") id: Int, // Path -подставление значения в какой-то запрос.
         //
-    ): Call<PersonDetails>
+    ): PersonDetails
 
 }

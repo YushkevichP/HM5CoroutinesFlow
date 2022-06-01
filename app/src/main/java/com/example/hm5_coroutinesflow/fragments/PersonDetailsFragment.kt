@@ -4,19 +4,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.navigation.ui.setupWithNavController
 import coil.load
+import com.example.hm5_coroutinesflow.ServiceLocator
 import com.example.hm5_coroutinesflow.databinding.FragmentPersonDetailsBinding
 import com.example.hm5_coroutinesflow.model.PersonDetails
-import com.example.hm5_coroutinesflow.retrofit.RickMortyService
+import kotlinx.coroutines.launch
+
 import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.HttpException
-import retrofit2.Response
+
 
 class PersonDetailsFragment : Fragment() {
 
@@ -44,31 +44,19 @@ class PersonDetailsFragment : Fragment() {
 
         binding.toolbar.setupWithNavController(findNavController()) // back_arrow
 
-        val counter = args.keyId
-        currentRequest = RickMortyService.personApi.getUserDetails(counter)
-        currentRequest?.enqueue(object : Callback<PersonDetails> {
-            override fun onResponse(call: Call<PersonDetails>, response: Response<PersonDetails>) {
+        viewLifecycleOwner.lifecycleScope.launch {
 
-                if (response.isSuccessful) {
-                    val tempPerson = response.body() ?: return
-                    with(binding) {
-                        imageUserFragment.load(tempPerson.avatarApiDetails)
-                        personGender.text = "Пол персонажа: ${tempPerson.gender}"
-                        personName.text = "Имя персонажа: ${tempPerson.name}"
-                        personStatus.text = "Жив или нет: ${tempPerson.status}"
+            val counter = args.keyId
 
-                    }
-                } else {
-                    HttpException(response).message()
-                }
-                currentRequest = null
+            val details = ServiceLocator.rickMortyApi.getUserDetails(counter)
+            with(binding) {
+                imageUserFragment.load(details.avatarApiDetails)
+                personGender.text = details.gender
+                personName.text = details.name
+                personStatus.text = details.status
+
             }
-
-            override fun onFailure(call: Call<PersonDetails>, t: Throwable) {
-                Toast.makeText(requireContext(), t.message, Toast.LENGTH_SHORT).show()
-                currentRequest = null
-            }
-        })
+        }
     }
 
     override fun onDestroyView() {

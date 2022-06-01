@@ -1,5 +1,5 @@
 package com.example.hm5_coroutinesflow.model
 
-data class PersonsListApi(
+data class wrapperForListFromApi(
          val results: List<CartoonPerson>
 )
