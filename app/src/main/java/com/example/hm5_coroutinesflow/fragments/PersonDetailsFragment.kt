@@ -12,10 +12,7 @@ import androidx.navigation.ui.setupWithNavController
 import coil.load
 import com.example.hm5_coroutinesflow.ServiceLocator
 import com.example.hm5_coroutinesflow.databinding.FragmentPersonDetailsBinding
-import com.example.hm5_coroutinesflow.model.PersonDetails
 import kotlinx.coroutines.launch
-
-import retrofit2.Call
 
 
 class PersonDetailsFragment : Fragment() {
@@ -26,7 +23,11 @@ class PersonDetailsFragment : Fragment() {
             "VIEW WAS DESTROYED"
         }
 
-    private var currentRequest: Call<PersonDetails>? = null
+    private val personRepository by lazy {
+        ServiceLocator.provideRepository()
+    }
+
+
     private val args by navArgs<PersonDetailsFragmentArgs>()
 
     override fun onCreateView(
@@ -46,9 +47,9 @@ class PersonDetailsFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
 
-            val counter = args.keyId
+            val id = args.keyId
 
-            val details = ServiceLocator.rickMortyApi.getUserDetails(counter)
+            val details = personRepository.getPersonDetails(id)
             with(binding) {
                 imageUserFragment.load(details.avatarApiDetails)
                 personGender.text = details.gender
@@ -62,6 +63,6 @@ class PersonDetailsFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        currentRequest?.cancel()
+
     }
 }

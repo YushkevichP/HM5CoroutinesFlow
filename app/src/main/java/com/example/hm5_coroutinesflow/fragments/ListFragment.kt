@@ -36,6 +36,10 @@ class ListFragment : Fragment() {
         }
     }
 
+    private val personRepository by lazy {
+        ServiceLocator.provideRepository()
+    }
+
     private var pageCounter = 1
     private var isLoading = false
     private var listForSubmit: List<ItemType<CartoonPerson>> = emptyList()
@@ -58,8 +62,6 @@ class ListFragment : Fragment() {
         loadNewPage(pageCounter)
         swipeToRefreshListener()
         addScrollListener(layoutManager)
-
-
     }
 
     private fun addScrollListener(layoutManager: LinearLayoutManager) {
@@ -89,18 +91,15 @@ class ListFragment : Fragment() {
 
     private fun loadNewPage(pageForRequest: Int) {
         viewLifecycleOwner.lifecycleScope.launch {
-
             try {
-                val tempList = ServiceLocator.rickMortyApi.getUsers(pageForRequest)
+                val tempList = personRepository.getUser(pageForRequest)
                 val listPersons = tempList.results
                 val content = listPersons.map {
                     ItemType.Content(it)
                 }
                 val resultList = content.plus(ItemType.Loading)
                 val currentList = personAdapter.currentList.dropLast(1)
-
                 listForSubmit = (currentList + resultList)
-
                 personAdapter.submitList(listForSubmit)
 
                 isLoading = false
@@ -136,7 +135,6 @@ class ListFragment : Fragment() {
             loadNewPage(pageCounter)
         }
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()
