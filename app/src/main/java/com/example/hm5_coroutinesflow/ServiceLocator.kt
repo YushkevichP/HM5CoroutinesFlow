@@ -1,23 +1,18 @@
-package com.example.hm5_coroutinesflow.retrofit
+package com.example.hm5_coroutinesflow
 
+import com.example.hm5_coroutinesflow.retrofit.RickMortyApi
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.create
 import java.util.concurrent.TimeUnit
 
+object ServiceLocator {
 
-//! retrofit
-object RickMortyService {
-
-    private val retrofit by lazy(LazyThreadSafetyMode.NONE) {
-        provideRetrofit()
-    }
-    val personApi by lazy(LazyThreadSafetyMode.NONE) {
-        retrofit.create<RickMortyApi>()
+    val rickMortyApi by lazy {
+        provideRetrofit().create<RickMortyApi>()
     }
 
-    // https://youtu.be/IDVxFjLeecA?t=11972
     private fun provideRetrofit(): Retrofit {
         val client = OkHttpClient.Builder()
             .readTimeout(20, TimeUnit.SECONDS)
@@ -29,5 +24,4 @@ object RickMortyService {
             .client(client)
             .build()
     }
-
 }
