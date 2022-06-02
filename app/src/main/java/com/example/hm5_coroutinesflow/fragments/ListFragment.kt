@@ -1,11 +1,15 @@
 package com.example.hm5_coroutinesflow.fragments
 
-import retrofit2.*
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.content.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -13,11 +17,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.hm5_coroutinesflow.ItemAdapter
 import com.example.hm5_coroutinesflow.R
 import com.example.hm5_coroutinesflow.ServiceLocator
+import com.example.hm5_coroutinesflow.database.appDataBase
 import com.example.hm5_coroutinesflow.databinding.FragmentListBinding
 import com.example.hm5_coroutinesflow.model.CartoonPerson
 import com.example.hm5_coroutinesflow.model.ItemType
-import com.example.hm5_coroutinesflow.model.wrapperForListFromApi
-import kotlinx.coroutines.flow.*
+import com.example.hm5_coroutinesflow.utilities.networkState
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 
@@ -29,7 +36,7 @@ class ListFragment : Fragment() {
             "View was destroyed"
         }
 
-    private val personAdapter by lazy {
+    private val personAdapter by lazy(LazyThreadSafetyMode.NONE) {
         ItemAdapter(requireContext()) { item ->
             val personItem = item as? ItemType.Content ?: return@ItemAdapter
             findNavController().navigate(
@@ -38,13 +45,17 @@ class ListFragment : Fragment() {
         }
     }
 
-    private val personRepository by lazy {
+    private val personRepository by lazy(LazyThreadSafetyMode.NONE) {
         ServiceLocator.provideRepository()
+    }
+
+    private val personDao by lazy(LazyThreadSafetyMode.NONE) {
+        requireContext().appDataBase.personDao()
     }
 
     private var pageCounter = 1
     private var isLoading = false
-    private var listForSubmit: List<ItemType<CartoonPerson>> = emptyList()
+    private var listForSubmitRetrofit: List<ItemType<CartoonPerson>> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -60,12 +71,63 @@ class ListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
         val layoutManager = LinearLayoutManager(requireContext())
+
+        checkNetWorkState()
         initRecyclerView(layoutManager)
         loadNewPage(pageCounter)
         swipeRefresh()
 
+    }
+
+    private fun checkNetWorkState() {
+        requireContext().networkState
+            .filter { isWorking ->
+                !isWorking
+            }
+            .onEach {
+                Toast.makeText(requireContext(), " Lost connection", Toast.LENGTH_SHORT).show()
+                uploadCashPerson()
+            }
+            .launchIn(viewLifecycleOwner.lifecycleScope)
+    }
+
+
+    private fun uploadCashPerson() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            // fetch person from db
+            // val listDao = personDao.getFirstTwenty()
+            val listDao = personDao.getAllPersons()
+            println("LIST DAO ==== $listDao")
+            val listForSubmitDao = listDao.map {
+                ItemType.Content(it)
+            }
+            personAdapter.submitList(listForSubmitDao)
+        }
+    }
+
+    private fun loadNewPage(pageForRequest: Int) {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+               // uploadCashPerson()
+                val tempList = personRepository.getUser(pageForRequest)
+                val listPersons = tempList.results
+                personDao.insertPersons(listPersons)
+                val content = listPersons.map {
+                    ItemType.Content(it)
+                }
+                val resultList = content.plus(ItemType.Loading)
+                val currentList = personAdapter.currentList.dropLast(1)
+                listForSubmitRetrofit = (currentList + resultList)
+                personAdapter.submitList(listForSubmitRetrofit)
+
+                isLoading = false
+                binding.swipeLayout.isRefreshing = false
+            } catch (e: Throwable) {
+                error(e)
+            }
+        }
     }
 
     private fun initRecyclerView(layoutManager: LinearLayoutManager) {
@@ -79,7 +141,6 @@ class ListFragment : Fragment() {
                         isLoading = true
                         pageCounter++
                         loadNewPage(pageCounter)
-                     //   println("PAGE COUNTER = $pageCounter")
                     }
                 }
             }
@@ -89,31 +150,10 @@ class ListFragment : Fragment() {
         }
     }
 
-    private fun loadNewPage(pageForRequest: Int) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val tempList = personRepository.getUser(pageForRequest)
-                val listPersons = tempList.results
-                val content = listPersons.map {
-                    ItemType.Content(it)
-                }
-                val resultList = content.plus(ItemType.Loading)
-                val currentList = personAdapter.currentList.dropLast(1)
-                listForSubmit = (currentList + resultList)
-                personAdapter.submitList(listForSubmit)
-
-                isLoading = false
-                binding.swipeLayout.isRefreshing = false
-            } catch (e: Throwable) {
-                error(e)
-            }
-        }
-    }
-
     private fun refreshListToStart() {
         pageCounter = 1
-        listForSubmit = emptyList()
-        personAdapter.submitList(listForSubmit)
+        listForSubmitRetrofit = emptyList()
+        personAdapter.submitList(listForSubmitRetrofit)
         loadNewPage(pageCounter)
 
     }
@@ -129,10 +169,6 @@ class ListFragment : Fragment() {
         _binding = null
     }
 }
-
-
-
-
 
 
 //----tried do with flow

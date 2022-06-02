@@ -10,7 +10,7 @@ import kotlinx.coroutines.withContext
 class PersonRepository(private val rickMortyApi:RickMortyApi) {
 
     suspend fun getUser(page: Int) = withContext(Dispatchers.IO){
-       // delay(4000)
+       // delay(2000)
        rickMortyApi.getUsers(page)
     }
 

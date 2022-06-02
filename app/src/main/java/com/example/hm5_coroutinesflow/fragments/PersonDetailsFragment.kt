@@ -23,7 +23,7 @@ class PersonDetailsFragment : Fragment() {
             "VIEW WAS DESTROYED"
         }
 
-    private val personRepository by lazy {
+    private val personRepository by lazy(LazyThreadSafetyMode.NONE) {
         ServiceLocator.provideRepository()
     }
 

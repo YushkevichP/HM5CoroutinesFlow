@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">HM3_Retrofit</string>
+    <string name="app_name">HM5_Coroutines</string>
     <string name="person_gendor">Пол персонажа: </string>
     <string name="person_name">Имя персонажа: </string>
     <string name="isAlive">Жив или нет: </string>

@@ -8,6 +8,7 @@ import retrofit2.create
 import java.util.concurrent.TimeUnit
 
 object ServiceLocator {
+
    private val rickMortyApi by lazy {
             provideRetrofit().create<RickMortyApi>()
     }
