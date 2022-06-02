@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'androidx.navigation.safeargs.kotlin' // fot navigation
+    id 'kotlin-kapt' // for room
 }
 
 android {
@@ -62,4 +63,14 @@ dependencies {
 
     //SwipeToRefresh
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
+
+    //SQlite
+    implementation "androidx.sqlite:sqlite-ktx:2.2.0"
+
+    //Room database
+    def roomVersion = "2.4.1"
+    kapt "androidx.room:room-compiler:$roomVersion"
+    implementation "androidx.room:room-runtime:$roomVersion"
+
+
 }
