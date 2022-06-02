@@ -4,6 +4,9 @@ import android.graphics.Rect
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 
 
 fun RecyclerView.addSpaceDecoration(bottomSpace: Int) {
@@ -24,23 +27,49 @@ fun RecyclerView.addSpaceDecoration(bottomSpace: Int) {
     })
 }
 
-fun RecyclerView.addPaginationScrollListener(
+ fun RecyclerView.addPaginationScrollListener(
     layoutManager: LinearLayoutManager,
     itemsToLoad: Int,
-    onLoadMore: () -> Unit
-){
-    addOnScrollListener(object : RecyclerView.OnScrollListener(){
+    onLoadMore: () -> Unit,
+) {
+    addOnScrollListener(object : RecyclerView.OnScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
             super.onScrolled(recyclerView, dx, dy)
 
             val totalItemCount = layoutManager.itemCount
             val lastVisibleItem = layoutManager.findLastVisibleItemPosition()
-            if (dy!=0 && totalItemCount<=(lastVisibleItem+itemsToLoad)){
+            if (dy != 0 && totalItemCount <= (lastVisibleItem + itemsToLoad)) {
                 recyclerView.post(onLoadMore)
             }
-
         }
     })
-
 }
+
+
+
+
+//-----for flow --later
+//fun RecyclerView.paginationScrollFlow(
+//    layoutManager: LinearLayoutManager,
+//    itemsToLoad: Int,
+//    onLoadMore: () -> Unit,
+//) = callbackFlow {
+//
+//    val listener = object : RecyclerView.OnScrollListener() {
+//        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+//            super.onScrolled(recyclerView, dx, dy)
+//
+//            val totalItemCount = layoutManager.itemCount
+//            val lastVisibleItem = layoutManager.findLastVisibleItemPosition()
+//            if (dy != 0 && totalItemCount <= (lastVisibleItem + itemsToLoad)) {
+//                trySend(Unit)
+//            }
+//        }
+//    }
+//    addOnScrollListener(listener)
+//
+//    awaitClose {
+//        removeOnScrollListener(listener)
+//    }
+//}
 

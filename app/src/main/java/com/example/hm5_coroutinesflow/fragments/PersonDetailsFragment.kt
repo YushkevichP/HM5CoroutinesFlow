@@ -27,7 +27,6 @@ class PersonDetailsFragment : Fragment() {
         ServiceLocator.provideRepository()
     }
 
-
     private val args by navArgs<PersonDetailsFragmentArgs>()
 
     override fun onCreateView(
@@ -46,16 +45,14 @@ class PersonDetailsFragment : Fragment() {
         binding.toolbar.setupWithNavController(findNavController()) // back_arrow
 
         viewLifecycleOwner.lifecycleScope.launch {
-
             val id = args.keyId
-
             val details = personRepository.getPersonDetails(id)
+
             with(binding) {
                 imageUserFragment.load(details.avatarApiDetails)
                 personGender.text = details.gender
                 personName.text = details.name
                 personStatus.text = details.status
-
             }
         }
     }
@@ -63,6 +60,5 @@ class PersonDetailsFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-
     }
 }

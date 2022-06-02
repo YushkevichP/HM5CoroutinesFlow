@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -16,6 +17,7 @@ import com.example.hm5_coroutinesflow.databinding.FragmentListBinding
 import com.example.hm5_coroutinesflow.model.CartoonPerson
 import com.example.hm5_coroutinesflow.model.ItemType
 import com.example.hm5_coroutinesflow.model.wrapperForListFromApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 
@@ -52,28 +54,18 @@ class ListFragment : Fragment() {
         return FragmentListBinding.inflate(inflater, container, false)
             .also { _binding = it }
             .root
+
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+
         val layoutManager = LinearLayoutManager(requireContext())
         initRecyclerView(layoutManager)
         loadNewPage(pageCounter)
-        swipeToRefreshListener()
-        addScrollListener(layoutManager)
-    }
+        swipeRefresh()
 
-    private fun addScrollListener(layoutManager: LinearLayoutManager) {
-        with(binding) {
-            recyclerView.addPaginationScrollListener(layoutManager, 1) {
-                if (!isLoading) {
-                    isLoading = true
-                    pageCounter++
-                    loadNewPage(pageCounter)
-                }
-            }
-        }
     }
 
     private fun initRecyclerView(layoutManager: LinearLayoutManager) {
@@ -82,9 +74,17 @@ class ListFragment : Fragment() {
                 addSpaceDecoration(resources.getDimensionPixelSize(R.dimen.bottom_space))
                 adapter = personAdapter
                 recyclerView.layoutManager = layoutManager
+                recyclerView.addPaginationScrollListener(layoutManager, 2) {
+                    if (!isLoading) {
+                        isLoading = true
+                        pageCounter++
+                        loadNewPage(pageCounter)
+                     //   println("PAGE COUNTER = $pageCounter")
+                    }
+                }
             }
             toolbar.setOnClickListener {
-                refreshListToStart()  // для себя, чтоб список обнулять
+                refreshListToStart()
             }
         }
     }
@@ -120,25 +120,66 @@ class ListFragment : Fragment() {
 
     private fun swipeRefresh() {
         binding.swipeLayout.setOnRefreshListener {
-            pageCounter = 1
-            listForSubmit = emptyList()
-            personAdapter.submitList(listForSubmit)
-            loadNewPage(pageCounter)
-        }
-    }
-
-    private fun swipeToRefreshListener() {
-        binding.swipeLayout.setOnRefreshListener {
-            pageCounter = 1
-            listForSubmit = emptyList()
-            personAdapter.submitList(listForSubmit)
-            loadNewPage(pageCounter)
+            refreshListToStart()
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-
     }
 }
+
+
+
+
+
+
+//----tried do with flow
+//    private val _paginationFlow = MutableSharedFlow<Unit>()
+//    private val paginationFlow = _paginationFlow.asSharedFlow()
+//    private fun addScrollListener(layoutManager: LinearLayoutManager) {
+//
+//        with(binding) {
+//            recyclerView
+//                .paginationScrollFlow(layoutManager, 4) {
+//                    if (!isLoading) {
+//                        isLoading = true
+//                        loadNewPage(pageCounter)
+//                        pageCounter++
+//                        println("PAGE COUNTER = $pageCounter")
+//                    }
+//                }
+//                .filter { !isLoading }
+//                .onEach { isLoading = true }
+//                .map {
+//                    personRepository.getUser(pageCounter).results
+//                }
+//                .map {
+//                    it.map {
+//                        ItemType.Content(it)
+//                    }
+//                }
+//                .map {
+//                    it.plus(ItemType.Loading)
+//                }
+//                .onEach {
+//                    personAdapter.submitList(it)
+//                }
+//                .onEach {
+//                    isLoading = false
+//              //      println("PAGE COUNTER = $pageCounter")
+//                }
+//                .launchIn(viewLifecycleOwner.lifecycleScope)
+
+
+//            recyclerView.paginationScrollFlow(layoutManager, 1) {
+//                _paginationFlow.tryEmit(Unit)
+//                if (!isLoading) {
+//                    isLoading = true
+//                    pageCounter++
+//                    loadNewPage(pageCounter)
+//                }
+//            }
+//        }
+//    }
